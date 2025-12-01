@@ -57,3 +57,10 @@ function renderGrid() {
 }
 
 window.addEventListener('resize', renderGrid);
+
+function saveToStorage(){ localStorage.setItem('game_2048_state', JSON.stringify(state)); }
+function loadFromStorage(){
+    const s = localStorage.getItem('game_2048_state');
+    if(s){ try{ state=JSON.parse(s); }catch(e){ state={grid:makeEmptyGrid(),score:0,best:0,over:false} } }
+}
+
