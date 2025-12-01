@@ -8,7 +8,16 @@ let state = {grid:[], score:0, best:0, over:false};
 let tileEls = [];
 
 let restartBtn = document.getElementById('restartBtn');
+let restartBtn2 = document.getElementById('restartBtn2');
 let undoBtn = document.getElementById('undoBtn');
+
+let gameOverModal = document.getElementById('gameOverModal');
+let gameOverMsg = document.getElementById('gameOverMsg');
+let saveWrap = document.getElementById('saveWrap');
+
+let playerName = document.getElementById('playerName');
+let savedMsg = document.getElementById('savedMsg');
+let mobileControls = document.getElementById('mobileControls');
 
 function makeEmptyGrid(){ return Array.from({length:SIZE},()=>Array(SIZE).fill(0)); }
 
@@ -163,6 +172,23 @@ undoBtn.addEventListener('click',()=>{
         renderGrid();
     }
 });
+
+function endGame(){
+    state.over=true;
+    saveToStorage();
+    localStorage.setItem('best_2048', state.best);
+    gameOverMsg.textContent='Игра окончена. Ваш счёт: '+state.score;
+    gameOverModal.classList.add('open');
+    saveWrap.style.display='block';
+    savedMsg.style.display='none';
+    playerName.value='';
+    mobileControls.style.display='none';
+}
+
+restartBtn2.addEventListener('click',()=>{ gameOverModal.classList.remove('open'); startNew(); });
+
+gameOverModal.addEventListener('click', e=>{ if(e.target===gameOverModal) gameOverModal.classList.remove('open'); });
+
 
 
 
