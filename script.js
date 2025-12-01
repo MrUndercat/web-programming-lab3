@@ -4,32 +4,35 @@ let boardEl = document.getElementById('board');
 let scoreEl = document.getElementById('score');
 let bestEl = document.getElementById('best');
 
-let state = {grid:[], score:0, best:0, over:false};
-let tileEls = [];
-
+let undoBtn = document.getElementById('undoBtn');
 let restartBtn = document.getElementById('restartBtn');
 let restartBtn2 = document.getElementById('restartBtn2');
-let undoBtn = document.getElementById('undoBtn');
+
+let leaderBtn = document.getElementById('leaderBtn');
+let leaderModal = document.getElementById('leaderModal');
+let leaderTableBody = document.querySelector('#leaderTable tbody');
+
+let closeLeader = document.getElementById('closeLeader');
+let clearLeaders = document.getElementById('clearLeaders');
 
 let gameOverModal = document.getElementById('gameOverModal');
 let gameOverMsg = document.getElementById('gameOverMsg');
 
 let saveWrap = document.getElementById('saveWrap');
 let saveScoreBtn = document.getElementById('saveScoreBtn');
-
 let playerName = document.getElementById('playerName');
 let savedMsg = document.getElementById('savedMsg');
+
 let mobileControls = document.getElementById('mobileControls');
 
-let leaderBtn = document.getElementById('leaderBtn');
-let leaderModal = document.getElementById('leaderModal');
-let leaderTableBody = document.querySelector('#leaderTable tbody');
-let closeLeader = document.getElementById('closeLeader');
-let clearLeaders = document.getElementById('clearLeaders');
+let state = {grid:[], score:0, best:0, over:false};
+let prevState = null;
+let tileEls = [];
 
-
+// Инициализация пустого грида
 function makeEmptyGrid(){ return Array.from({length:SIZE},()=>Array(SIZE).fill(0)); }
 
+// Создание DOM-элементы плиток, вычисляние размеров и размещение по сетке
 function initTiles(){
     tileEls = [];
     boardEl.innerHTML = '';
@@ -50,6 +53,7 @@ function initTiles(){
     }
 }
 
+// Обновление отображения: расставление плиток по сетке и изменение их значений
 function renderGrid() {
     const boardRect = boardEl.getBoundingClientRect();
     const gap = 12;
@@ -77,16 +81,36 @@ function renderGrid() {
     bestEl.textContent = state.best;
 }
 
+// Перерендер при ресайзе окна
 window.addEventListener('resize', renderGrid);
 
+// Сохранение состояния.
 function saveToStorage(){ localStorage.setItem('game_2048_state', JSON.stringify(state)); }
 function loadFromStorage(){
     const s = localStorage.getItem('game_2048_state');
     if(s){ try{ state=JSON.parse(s); }catch(e){ state={grid:makeEmptyGrid(),score:0,best:0,over:false} } }
 }
 
+// Реализация обратного хода.
+function pushUndo(){ prevState = JSON.parse(JSON.stringify(state)); }
+
+function canUndo(){ return prevState && !state.over; }
+
+undoBtn.addEventListener('click',()=>{ if(canUndo()){ state=JSON.parse(JSON.stringify(prevState)); prevState=null; saveToStorage(); renderGrid(); } });
+
+// Инициализация новой игры.
+function startNew(){
+    state={grid:makeEmptyGrid(), score:0, best:Math.max(state.best||0, Number(localStorage.getItem('best_2048')||0)), over:false};
+    pushUndo(); addRandomTiles(randInt(1,3)); saveToStorage(); renderGrid();
+}
+
+restartBtn.addEventListener('click',()=>{ startNew(); });
+
+restartBtn2.addEventListener('click',()=>{ gameOverModal.classList.remove('open'); startNew(); });
+
 function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 
+// Логика появления новых плиток
 function addRandomTiles(count=1){
     const empties=[];
     for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(state.grid[r][c]===0) empties.push([r,c]);
@@ -98,15 +122,7 @@ function addRandomTiles(count=1){
     }
 }
 
-function startNew(){
-    state={grid:makeEmptyGrid(), score:0, best:Math.max(state.best||0, Number(localStorage.getItem('best_2048')||0)), over:false};
-    addRandomTiles(randInt(1,3));
-    saveToStorage();
-    renderGrid();
-}
-
-restartBtn.addEventListener('click',()=>{ startNew(); });
-
+// Передвижение элементов.
 function move(dir){
     if(state.over) return;
     pushUndo();
@@ -138,6 +154,7 @@ function move(dir){
     } else prevState=null;
 }
 
+// условие, при выполнении которого проверяется, можем ли продолжать ходить или нет.
 function canMove(){
     for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
         if(state.grid[r][c]===0) return true;
@@ -148,12 +165,34 @@ function canMove(){
     return false;
 }
 
+// Функция завершения игры: state over, сохранение результата.
+function endGame(){
+    state.over=true;
+
+    saveToStorage();
+    localStorage.setItem('best_2048', state.best);
+
+    gameOverMsg.textContent='Игра окончена. Ваш счёт: '+state.score;
+    gameOverModal.classList.add('open');
+
+    saveWrap.style.display='block';
+    savedMsg.style.display='none';
+
+    playerName.value='';
+
+    mobileControls.style.display='none';
+}
+
+// движение плиток
 window.addEventListener('keydown', e=>{
     if(e.key.startsWith('Arrow')){
         e.preventDefault();
         move({ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'}[e.key]);
     }
 });
+
+// на мобилках нет клавиатуры :)
+document.querySelectorAll('#mobileControls button').forEach(b=>b.addEventListener('click',()=>{ move(b.dataset.dir); }));
 
 let touchStart=null;
 
@@ -169,43 +208,20 @@ boardEl.addEventListener('touchend', e=>{
     touchStart=null;
 });
 
-let prevState = null;
-function pushUndo(){ prevState = JSON.parse(JSON.stringify(state)); }
-function canUndo(){ return prevState && !state.over; }
-
-undoBtn.addEventListener('click',()=>{
-    if(canUndo()){
-        state=JSON.parse(JSON.stringify(prevState));
-        prevState=null;
-        saveToStorage();
-        renderGrid();
-    }
-});
-
-function endGame(){
-    state.over=true;
-    saveToStorage();
-    localStorage.setItem('best_2048', state.best);
-    gameOverMsg.textContent='Игра окончена. Ваш счёт: '+state.score;
-    gameOverModal.classList.add('open');
-    saveWrap.style.display='block';
-    savedMsg.style.display='none';
-    playerName.value='';
-    mobileControls.style.display='none';
-}
-
-restartBtn2.addEventListener('click',()=>{ gameOverModal.classList.remove('open'); startNew(); });
-
-gameOverModal.addEventListener('click', e=>{ if(e.target===gameOverModal) gameOverModal.classList.remove('open'); });
-
+// Сохранение/загрузка лидеров
 function loadLeaders(){ return JSON.parse(localStorage.getItem('leaders_2048')||'[]'); }
+
 function saveLeader(name,score){
     const arr=loadLeaders();
     arr.push({name,score,date:new Date().toLocaleString()});
     arr.sort((a,b)=>b.score-a.score);
     localStorage.setItem('leaders_2048',JSON.stringify(arr.slice(0,10)));
 }
-function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+leaderBtn.addEventListener('click',()=>{ showLeaders(); });
+
+closeLeader.addEventListener('click',()=>{ leaderModal.classList.remove('open'); if(!state.over) mobileControls.style.display='flex'; });
+clearLeaders.addEventListener('click',()=>{ localStorage.removeItem('leaders_2048'); showLeaders(); });
 
 function showLeaders(){
     leaderTableBody.innerHTML='';
@@ -218,11 +234,7 @@ function showLeaders(){
     mobileControls.style.display='none';
 }
 
-leaderBtn.addEventListener('click',()=>{ showLeaders(); });
-
-closeLeader.addEventListener('click',()=>{ leaderModal.classList.remove('open'); if(!state.over) mobileControls.style.display='flex'; });
-
-clearLeaders.addEventListener('click',()=>{ localStorage.removeItem('leaders_2048'); showLeaders(); });
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 saveScoreBtn.addEventListener('click',()=>{
     const name=playerName.value.trim()||'Аноним';
@@ -232,9 +244,9 @@ saveScoreBtn.addEventListener('click',()=>{
     localStorage.setItem('best_2048', Math.max(Number(localStorage.getItem('best_2048')||0),state.score));
 });
 
-document.querySelectorAll('#mobileControls button')
-    .forEach(b=>b.addEventListener('click',()=>{ move(b.dataset.dir); }));
+gameOverModal.addEventListener('click', e=>{ if(e.target===gameOverModal) gameOverModal.classList.remove('open'); });
 
+// Инициализация игры
 function init(){
     loadFromStorage();
     if(!state.grid || state.grid.length!==SIZE) state.grid=makeEmptyGrid();
@@ -247,8 +259,5 @@ function init(){
 
     if(window.innerWidth<=420) mobileControls.style.display='flex';
 }
+
 init();
-
-
-
-
