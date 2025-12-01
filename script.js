@@ -7,6 +7,8 @@ let bestEl = document.getElementById('best');
 let state = {grid:[], score:0, best:0, over:false};
 let tileEls = [];
 
+let restartBtn = document.getElementById('restartBtn');
+
 function makeEmptyGrid(){ return Array.from({length:SIZE},()=>Array(SIZE).fill(0)); }
 
 function initTiles(){
@@ -63,4 +65,27 @@ function loadFromStorage(){
     const s = localStorage.getItem('game_2048_state');
     if(s){ try{ state=JSON.parse(s); }catch(e){ state={grid:makeEmptyGrid(),score:0,best:0,over:false} } }
 }
+
+function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+function addRandomTiles(count=1){
+    const empties=[];
+    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(state.grid[r][c]===0) empties.push([r,c]);
+    count=Math.min(count,empties.length);
+    for(let i=0;i<count;i++){
+        const idx=Math.floor(Math.random()*empties.length);
+        const [r,c]=empties.splice(idx,1)[0];
+        state.grid[r][c] = Math.random()<0.9?2:4;
+    }
+}
+
+function startNew(){
+    state={grid:makeEmptyGrid(), score:0, best:Math.max(state.best||0, Number(localStorage.getItem('best_2048')||0)), over:false};
+    addRandomTiles(randInt(1,3));
+    saveToStorage();
+    renderGrid();
+}
+
+restartBtn.addEventListener('click',()=>{ startNew(); });
+
 
