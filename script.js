@@ -13,11 +13,20 @@ let undoBtn = document.getElementById('undoBtn');
 
 let gameOverModal = document.getElementById('gameOverModal');
 let gameOverMsg = document.getElementById('gameOverMsg');
+
 let saveWrap = document.getElementById('saveWrap');
+let saveScoreBtn = document.getElementById('saveScoreBtn');
 
 let playerName = document.getElementById('playerName');
 let savedMsg = document.getElementById('savedMsg');
 let mobileControls = document.getElementById('mobileControls');
+
+let leaderBtn = document.getElementById('leaderBtn');
+let leaderModal = document.getElementById('leaderModal');
+let leaderTableBody = document.querySelector('#leaderTable tbody');
+let closeLeader = document.getElementById('closeLeader');
+let clearLeaders = document.getElementById('clearLeaders');
+
 
 function makeEmptyGrid(){ return Array.from({length:SIZE},()=>Array(SIZE).fill(0)); }
 
@@ -189,6 +198,56 @@ restartBtn2.addEventListener('click',()=>{ gameOverModal.classList.remove('open'
 
 gameOverModal.addEventListener('click', e=>{ if(e.target===gameOverModal) gameOverModal.classList.remove('open'); });
 
+function loadLeaders(){ return JSON.parse(localStorage.getItem('leaders_2048')||'[]'); }
+function saveLeader(name,score){
+    const arr=loadLeaders();
+    arr.push({name,score,date:new Date().toLocaleString()});
+    arr.sort((a,b)=>b.score-a.score);
+    localStorage.setItem('leaders_2048',JSON.stringify(arr.slice(0,10)));
+}
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function showLeaders(){
+    leaderTableBody.innerHTML='';
+    loadLeaders().forEach((it,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${i+1}</td><td>${escapeHtml(it.name)}</td><td>${it.score}</td><td>${it.date}</td>`;
+        leaderTableBody.appendChild(tr);
+    });
+    leaderModal.classList.add('open');
+    mobileControls.style.display='none';
+}
+
+leaderBtn.addEventListener('click',()=>{ showLeaders(); });
+
+closeLeader.addEventListener('click',()=>{ leaderModal.classList.remove('open'); if(!state.over) mobileControls.style.display='flex'; });
+
+clearLeaders.addEventListener('click',()=>{ localStorage.removeItem('leaders_2048'); showLeaders(); });
+
+saveScoreBtn.addEventListener('click',()=>{
+    const name=playerName.value.trim()||'Аноним';
+    saveLeader(name,state.score);
+    savedMsg.style.display='block';
+    saveWrap.style.display='none';
+    localStorage.setItem('best_2048', Math.max(Number(localStorage.getItem('best_2048')||0),state.score));
+});
+
+document.querySelectorAll('#mobileControls button')
+    .forEach(b=>b.addEventListener('click',()=>{ move(b.dataset.dir); }));
+
+function init(){
+    loadFromStorage();
+    if(!state.grid || state.grid.length!==SIZE) state.grid=makeEmptyGrid();
+    let empty=true;
+    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(state.grid[r][c]) empty=false;
+    if(empty){ addRandomTiles(randInt(1,3)); saveToStorage(); }
+
+    initTiles();
+    renderGrid();
+
+    if(window.innerWidth<=420) mobileControls.style.display='flex';
+}
+init();
 
 
 
