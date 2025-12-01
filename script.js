@@ -8,6 +8,7 @@ let state = {grid:[], score:0, best:0, over:false};
 let tileEls = [];
 
 let restartBtn = document.getElementById('restartBtn');
+let undoBtn = document.getElementById('undoBtn');
 
 function makeEmptyGrid(){ return Array.from({length:SIZE},()=>Array(SIZE).fill(0)); }
 
@@ -90,6 +91,7 @@ restartBtn.addEventListener('click',()=>{ startNew(); });
 
 function move(dir){
     if(state.over) return;
+    pushUndo();
     let moved=false;
     let points=0;
 
@@ -114,8 +116,8 @@ function move(dir){
         addRandomTiles(randInt(1,2));
         saveToStorage();
         renderGrid();
-        if(!canMove()) endGame(); // todo
-    }
+        if(!canMove()) endGame();
+    } else prevState=null;
 }
 
 function canMove(){
@@ -127,5 +129,41 @@ function canMove(){
     }
     return false;
 }
+
+window.addEventListener('keydown', e=>{
+    if(e.key.startsWith('Arrow')){
+        e.preventDefault();
+        move({ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'}[e.key]);
+    }
+});
+
+let touchStart=null;
+
+boardEl.addEventListener('touchstart', e=>{ if(e.touches.length===1) touchStart=e.touches[0]; });
+boardEl.addEventListener('touchend', e=>{
+    if(!touchStart) return;
+    const t=e.changedTouches[0];
+    const dx=t.clientX-touchStart.clientX;
+    const dy=t.clientY-touchStart.clientY;
+    if(Math.abs(dx)+Math.abs(dy)<30){ touchStart=null; return; }
+    if(Math.abs(dx)>Math.abs(dy)) move(dx>0?'right':'left');
+    else move(dy>0?'down':'up');
+    touchStart=null;
+});
+
+let prevState = null;
+function pushUndo(){ prevState = JSON.parse(JSON.stringify(state)); }
+function canUndo(){ return prevState && !state.over; }
+
+undoBtn.addEventListener('click',()=>{
+    if(canUndo()){
+        state=JSON.parse(JSON.stringify(prevState));
+        prevState=null;
+        saveToStorage();
+        renderGrid();
+    }
+});
+
+
 
 
