@@ -88,4 +88,44 @@ function startNew(){
 
 restartBtn.addEventListener('click',()=>{ startNew(); });
 
+function move(dir){
+    if(state.over) return;
+    let moved=false;
+    let points=0;
+
+    const operateLine = line=>{
+        const arr=line.filter(v=>v!==0);
+        for(let i=0;i<arr.length-1;i++){
+            if(arr[i]===arr[i+1]){ arr[i]*=2; points+=arr[i]; arr.splice(i+1,1); }
+        }
+        while(arr.length<SIZE) arr.push(0);
+        return arr;
+    };
+
+    if(dir==='left') for(let r=0;r<SIZE;r++){ const res=operateLine(state.grid[r]); for(let c=0;c<SIZE;c++){ if(state.grid[r][c]!==res[c]) moved=true; state.grid[r][c]=res[c]; } }
+    else if(dir==='right') for(let r=0;r<SIZE;r++){ const res=operateLine(state.grid[r].slice().reverse()).reverse(); for(let c=0;c<SIZE;c++){ if(state.grid[r][c]!==res[c]) moved=true; state.grid[r][c]=res[c]; } }
+    else if(dir==='up') for(let c=0;c<SIZE;c++){ const col=[]; for(let r=0;r<SIZE;r++) col.push(state.grid[r][c]); const res=operateLine(col); for(let r=0;r<SIZE;r++){ if(state.grid[r][c]!==res[r]) moved=true; state.grid[r][c]=res[r]; } }
+    else if(dir==='down') for(let c=0;c<SIZE;c++){ const col=[]; for(let r=SIZE-1;r>=0;r--) col.push(state.grid[r][c]); const res=operateLine(col).reverse(); for(let r=0;r<SIZE;r++){ if(state.grid[r][c]!==res[r]) moved=true; state.grid[r][c]=res[r]; } }
+
+    state.score+=points;
+    if(state.score>state.best) state.best=state.score;
+
+    if(moved){
+        addRandomTiles(randInt(1,2));
+        saveToStorage();
+        renderGrid();
+        if(!canMove()) endGame(); // todo
+    }
+}
+
+function canMove(){
+    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+        if(state.grid[r][c]===0) return true;
+        const v=state.grid[r][c];
+        if(c+1<SIZE && state.grid[r][c+1]===v) return true;
+        if(r+1<SIZE && state.grid[r+1][c]===v) return true;
+    }
+    return false;
+}
+
 
