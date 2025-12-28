@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>2048 — Лабораторная</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -29,11 +29,11 @@
     <div class="game-wrap">
         <div class="board" id="board" aria-label="Игровое поле"></div>
 
-        <div style="max-width:320px;">
+        <div class="game-info">
             <p>Управление: стрелки клавиатуры (десктоп). На мобильных — виртуальные кнопки или свайпы.</p>
             <div class="mobile-controls" id="mobileControls">
                 <button data-dir="up">↑</button>
-                <div style="display:flex;gap:6px;width:100%">
+                <div class="mobile-controls-row">
                     <button data-dir="left">←</button>
                     <button data-dir="right">→</button>
                 </div>
@@ -46,9 +46,9 @@
 <div id="gameOverModal" class="modal">
     <div class="card">
         <div id="gameOverMsg">Игра окончена</div>
-        <div id="saveWrap" style="margin-top:10px">
+        <div id="saveWrap" class="save-wrap">
             <input id="playerName" placeholder="Введите имя" />
-            <div style="display:flex;gap:8px">
+            <div class="save-buttons">
                 <button id="saveScoreBtn">Сохранить результат</button>
                 <button id="restartBtn2">Начать заново</button>
             </div>
@@ -61,7 +61,7 @@
     <div class="card leaderboard">
         <h3>Топ-10 рекорд</h3>
         <table id="leaderTable"><thead><tr><th>#</th><th>Имя</th><th>Очки</th><th>Дата</th></tr></thead><tbody></tbody></table>
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <div class="leader-actions">
             <button id="closeLeader">Закрыть</button>
             <button id="clearLeaders">Очистить</button>
         </div>

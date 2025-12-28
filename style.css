@@ -216,6 +216,32 @@ h1 {
     flex: 1;
 }
 
+.mobile-controls-row {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+}
+
+.game-info {
+    max-width: 320px;
+}
+
+#saveWrap {
+    margin-top: 10px;
+}
+
+.save-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.leader-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
 @media (max-width: 720px) {
     :root { --size: 280px; }
 }
